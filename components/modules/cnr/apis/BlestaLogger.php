@@ -1,5 +1,7 @@
 <?php
 
+namespace CNR\MODULE\LIB\API;
+
 use Blesta\Core\Util\Common\Traits\Container;
 
 class BlestaLogger implements \CNIC\LoggerInterface
