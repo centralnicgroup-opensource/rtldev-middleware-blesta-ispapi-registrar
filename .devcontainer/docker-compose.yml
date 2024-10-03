@@ -29,7 +29,7 @@ services:
       - 3306:3306
     networks:
       blesta:
-        ipv4_address: 172.16.238.11
+        ipv4_address: 172.16.238.12
 
   phpmyadmin:
     image: phpmyadmin
@@ -38,9 +38,9 @@ services:
     depends_on:
       - blesta
     environment:
-      PMA_HOST: 172.16.238.11
+      PMA_HOST: 172.16.238.12
       PMA_PORT: 3306
     ports:
-      - 8081:80
+      - 8082:80
     networks:
       - blesta

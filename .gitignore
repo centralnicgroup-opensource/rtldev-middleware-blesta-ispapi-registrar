@@ -9,3 +9,5 @@ vendor
 .devcontainer/supporting_files/archives/uploads
 .devcontainer/supporting_files/archives/hotfix-php8
 blesta-cnr-registrar-latest.zip
+components/modules/ispapi
+components/modules/module-namesilo

@@ -2,6 +2,8 @@
 
 namespace CNR\MODULE\LIB;
 
+use CNR\MODULE\LIB\API\BlestaLogger;
+
 class Base
 {
     private static $moduleInstance;
@@ -44,7 +46,7 @@ class Base
                 "cnic/" . self::$moduleInstance->getVersion(),
             ])
             ->enableDebugMode() // activate logging
-            ->setCustomLogger(new \BlestaLogger(
+            ->setCustomLogger(new BlestaLogger(
                 self::$module->module_id,
                 $cl->getURL()
             ));

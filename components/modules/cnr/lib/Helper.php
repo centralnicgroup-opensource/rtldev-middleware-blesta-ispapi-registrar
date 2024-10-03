@@ -173,9 +173,22 @@ class Helper
     public static function getSupportedRRTypes()
     {
         return [
-            "A", "AAAA", "ALIAS", "CAA", "CNAME", "MX", "MXE",
-            "NAPTR", "NS", "PTR", "SPF", "SSHFP", "SRV", "TXT",
-            "TLSA", "X-HTTP"
+            "A",
+            "AAAA",
+            "ALIAS",
+            "CAA",
+            "CNAME",
+            "MX",
+            "MXE",
+            "NAPTR",
+            "NS",
+            "PTR",
+            "SPF",
+            "SSHFP",
+            "SRV",
+            "TXT",
+            "TLSA",
+            "X-HTTP"
         ];
     }
 
@@ -344,6 +357,26 @@ class Helper
             "ts" => $ts,
             "short" => date("Y-m-d", $ts === false ? 0 : $ts),
             "long" => date("Y-m-d H:i:s", $ts === false ? 0 : $ts)
+        ];
+    }
+
+    /**
+     * Extracts the SLD (Second Level Domain) and TLD (Top Level Domain) from a given domain.
+     *
+     * @param string $domain The domain name to extract SLD and TLD from.
+     * @return array|string An associative array containing 'sld' and 'tld'.
+     */
+    public static function getSldTld(string $domain, bool $tldOnly = false)
+    {
+        list($sld, $tld) = explode(".", $domain, 2);
+
+        if ($tldOnly) {
+            return $tld ?? "";
+        }
+
+        return [
+            "sld" => $sld,
+            "tld" => $tld
         ];
     }
 }

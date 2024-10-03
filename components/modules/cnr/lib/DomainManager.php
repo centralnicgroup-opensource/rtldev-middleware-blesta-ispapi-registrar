@@ -395,4 +395,21 @@ class DomainManager extends Base
         $command["source"] = $hostName;
         $this->call($command);
     }
+
+    public function getAdditionalFields($params)
+    {
+        $command["COMMAND"] = "QueryCommandSyntax";
+        $command["CLASS"] = $params["tld"];
+        switch ($params["type"]) {
+            case "modify":
+            case "trade":
+            case "transfer":
+                $command["COMMANDNAME"] = ucfirst($params["type"]) . "Domain";
+                break;
+            default:
+                $command["COMMANDNAME"] = "AddDomain";
+                break;
+        }
+        return $this->call($command);
+    }
 }

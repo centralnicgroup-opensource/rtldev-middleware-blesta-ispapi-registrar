@@ -1,9 +1,10 @@
 <?php
 
-use Blesta\Consoleation\Console;
+use CNR\MODULE\LIB\AdditionalFields;
 use CNR\MODULE\LIB\Base;
 use CNR\MODULE\LIB\DomainManager;
 use CNR\MODULE\LIB\Helper;
+use CNR\MODULE\LIB\BlestaOverrides;
 
 /**
  * Cnr Module
@@ -47,7 +48,6 @@ class Cnr extends RegistrarModule
         $path = implode(DS, [__DIR__, "apis", ""]);
         Loader::load($path . "BlestaLogger.php");
         // ---------------------------------------------------------------
-
         $this->domainManager = new DomainManager();
     }
 
@@ -119,12 +119,12 @@ class Cnr extends RegistrarModule
         $input_fields = [];
 
         if (isset($vars["domain"])) {
-            $tld = $this->getTld($vars["domain"]);
+            $tld = Helper::getSldTld($vars["domain"], true);
         }
 
         $input_fields = array_merge(
             Configure::get("Cnr.domain_fields"),
-            (array) Configure::get("Cnr.domain_fields" . $tld),
+            (array) Configure::get("Cnr.domain_fields." . $tld),
             (array) Configure::get("Cnr.nameserver_fields"),
             (array) Configure::get("Cnr.transfer_fields"),
             [
@@ -387,9 +387,9 @@ class Cnr extends RegistrarModule
         $fields = array_intersect_key($vars, $input_fields);
         foreach ($fields as $key => $value) {
             $meta[] = [
-                "key" => $key,
-                "value" => $value,
-                "encrypted" => 0,
+                'key' => $key,
+                'value' => $value,
+                'encrypted' => 0
             ];
         }
 
@@ -701,6 +701,9 @@ class Cnr extends RegistrarModule
         // * audit domains
         // * etc.
 
+        // Load the required models
+        //Loader::loadModels($this, ['Languages', 'Settings', 'Currencies', 'Packages']);
+
         // Load the view into this object, so helpers can be automatically added to the view
         $this->view = new View("manage", "default");
         $this->view->base_uri = $this->base_uri;
@@ -982,6 +985,7 @@ class Cnr extends RegistrarModule
         $tld_options = $fields->label(Language::_("Cnr.package_fields.tld_options", true));
 
         $tlds = $this->getTlds();
+        sort($tlds);
 
         // Set all TLDs Dropdown
         // TODO may improve by setting labels
@@ -1053,6 +1057,10 @@ class Cnr extends RegistrarModule
             return new ModuleFields();
         }
 
+        Base::setModule($this->getModuleRow($package->module_row));
+        Base::moduleInstance($this);
+
+        $tld = Helper::getSldTld($vars->domain, true);
         // Set default name servers
         if (!isset($vars->ns1) && isset($package->meta->ns)) {
             $i = 1;
@@ -1084,8 +1092,11 @@ class Cnr extends RegistrarModule
 
         // Handle transfer request
         if ((isset($vars->transfer) && $vars->transfer === "true") || !empty($vars->transfer_key)) {
+            $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register", "moduleRow" => $this->getModuleRow($package->module_row)]);
+            $extension_fields = $additionalFields->getConfiguration();
             return $this->arrayToModuleFields(array_merge(
                 $fields,
+                $extension_fields,
                 Configure::get("Cnr.transfer_fields"),
                 Configure::get("Cnr.nameserver_fields")
             ), null, $vars);
@@ -1103,15 +1114,14 @@ class Cnr extends RegistrarModule
 
             if ($tld) {
                 $extension_fields = array_merge(
-                    (array) Configure::get("Cnr.domain_fields" . $tld),
-                    (array) Configure::get("Cnr.contact_fields" . $tld)
+                    (array) Configure::get("Cnr.domain_fields." . $tld),
+                    (array) Configure::get("Cnr.contact_fields." . $tld)
                 );
                 if ($extension_fields) {
                     $module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
                 }
             }
         }
-
         $module_fields->setHtml("
             <script type=\"text/javascript\">
                 $(document).ready(function() {
@@ -1138,12 +1148,15 @@ class Cnr extends RegistrarModule
             </script>
         ");
 
-        //TODO Build the domain fields
-        /*$fields = $this->buildDomainModuleFields($vars);
-        if ($fields) {
-        $module_fields = $fields;
-        }*/
-        return $module_fields;
+        // Additional domain fields
+        $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register", "moduleRow" => $this->getModuleRow($package->module_row)]);
+        $extension_fields = $additionalFields->getConfiguration();
+        Configure::set("Cnr.domain_fields.{$tld}", $extension_fields);
+        if ($extension_fields) {
+            $module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
+        }
+
+        return (isset($module_fields) ? $module_fields : new ModuleFields());
     }
 
     /**
@@ -1164,6 +1177,12 @@ class Cnr extends RegistrarModule
         if ($package->meta->type !== "domain") {
             return new ModuleFields();
         }
+        
+        Base::setModule($this->getModuleRow($package->module_row));
+        Base::moduleInstance($this);
+
+        $tld = Helper::getSldTld($vars->domain, true);
+
         // Set default name servers
         if (!isset($vars->ns) && isset($package->meta->ns)) {
             $i = 1;
@@ -1174,9 +1193,16 @@ class Cnr extends RegistrarModule
 
         // Handle transfer request
         if (isset($vars->transfer) || isset($vars->transfer_key)) {
+            $extension_fields = [];
+            if ($tld) {
+                $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register", "moduleRow" => $this->getModuleRow($package->module_row)]);
+                $extension_fields = $additionalFields->getConfiguration();
+                Configure::set("Cnr.domain_fields.{$tld}", $extension_fields);
+            }
             $fields = array_merge(
                 Configure::get("Cnr.transfer_fields"),
-                Configure::get("Cnr.nameserver_fields")
+                Configure::get("Cnr.nameserver_fields"),
+                $extension_fields
             );
 
             // TODO: check .ca for whois privacy service
@@ -1189,32 +1215,34 @@ class Cnr extends RegistrarModule
 
             return $this->arrayToModuleFields($fields, null, $vars);
         }
-        // Handle domain registration
-        $fields = array_merge(
-            Configure::get("Cnr.nameserver_fields"),
-            Configure::get("Cnr.domain_fields")
-        );
 
-        // TODO: check .ca for whois privacy service
-        // shouldn't be supported
-        // $fields["private"]
+        // // Handle domain registration
+        // $fields = array_merge(
+        //     Configure::get("Cnr.nameserver_fields"),
+        //     Configure::get("Cnr.domain_fields"),
+        // );
 
-        // Already have the domain name don't make editable
-        $fields["domain"]["type"] = "hidden";
-        $fields["domain"]["label"] = null;
+        // // TODO: check .ca for whois privacy service
+        // // shouldn't be supported
+        // // $fields["private"]
 
-        $module_fields = $this->arrayToModuleFields($fields, null, $vars);
+        // // Already have the domain name don't make editable
+        // $fields["domain"]["type"] = "hidden";
+        // $fields["domain"]["label"] = null;
 
+        $module_fields = [];//$this->arrayToModuleFields($fields, null, $vars);
         if (isset($vars->domain)) {
-            $tld = $this->getTld($vars->domain);
+            $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register", "moduleRow" => $this->getModuleRow($package->module_row)]);
+            $extension_fields = $additionalFields->getConfiguration();
 
-            $extension_fields = Configure::get("Cnr.domain_fields" . $tld);
             if ($extension_fields) {
+                Configure::set("Cnr.domain_fields.{$tld}", $extension_fields);
                 $module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
             }
         }
 
-        return $module_fields;
+        // Determine whether this is an AJAX request
+        return (isset($module_fields) ? $module_fields : new ModuleFields());
     }
 
     /**
@@ -1607,9 +1635,6 @@ class Cnr extends RegistrarModule
         $fields = $this->serviceFieldsToObject($service->fields);
 
         $whois_sections = Configure::get("Cnr.whois_sections");
-
-        $tld = trim($this->getTld($fields->domain), ".");
-        $sld = trim(substr($fields->domain, 0, -strlen($tld)), ".");
 
         if (!empty($post)) {
             // Modify/update contact/whois information
@@ -2207,7 +2232,7 @@ class Cnr extends RegistrarModule
             Configure::get("Blesta.company_id") . DS . "modules" . DS . "cnr" . DS
         );
         if ($cache) {
-            //return unserialize(base64_decode($cache));
+            return unserialize(base64_decode($cache));
         }
 
         // Fetch cnr TLDs
@@ -3000,5 +3025,95 @@ class Cnr extends RegistrarModule
                 }
             }
         }
+    }
+
+    protected function arrayToModuleFields($arr, \ModuleFields $fields = null, $vars = null)
+    {
+        if ($fields == null) {
+            $fields = new \ModuleFields();
+        }
+
+        foreach ($arr as $name => $field) {
+            $label = isset($field['label']) ? $field['label'] : null;
+            $type = isset($field['type']) ? $field['type'] : null;
+            $options = isset($field['options']) ? $field['options'] : null;
+            $attributes = isset($field['attributes']) ? $field['attributes'] : [];
+            $description = isset($field['description']) ? $field['description'] : null;
+
+            $field_id = isset($attributes['id']) ? $attributes['id'] : $name . '_id';
+
+            $field_label = null;
+            if ($type !== 'hidden') {
+                $field_label = $fields->label($label, $field_id, [], true);
+            }
+
+            $attributes['id'] = $field_id;
+
+            switch ($type) {
+                default:
+                    $value = $options;
+                    $type = 'field' . ucfirst($type);
+                    $field_label->attach(
+                        $fields->{$type}($name, isset($vars->{$name}) ? $vars->{$name} : $value, $attributes),
+                    );
+                    break;
+                case 'hidden':
+                    $value = $options;
+                    $fields->setField(
+                        $fields->fieldHidden($name, isset($vars->{$name}) ? $vars->{$name} : $value, $attributes)
+                    );
+                    break;
+                case 'select':
+
+                    $field_label->attach(
+                        $fields->fieldSelect(
+                            $name,
+                            $options,
+                            isset($vars->{$name}) ? $vars->{$name} : null,
+                            $attributes
+                        )
+                    );
+                    break;
+                case 'checkbox':
+                    // No break
+                case 'radio':
+                    $i = 0;
+                    foreach ($options as $key => $value) {
+                        $option_id = $field_id . '_' . $i++;
+                        $option_label = $fields->label($value, $option_id);
+
+                        $checked = false;
+                        if (isset($vars->{$name})) {
+                            if (is_array($vars->{$name})) {
+                                $checked = in_array($key, $vars->{$name});
+                            } else {
+                                $checked = $key == $vars->{$name};
+                            }
+                        }
+
+                        if ($type == 'checkbox') {
+                            $field_label->attach(
+                                $fields->fieldCheckbox($name, $key, $checked, ['id' => $option_id], $option_label)
+                            );
+                        } else {
+                            $field_label->attach(
+                                $fields->fieldRadio($name, $key, $checked, ['id' => $option_id], $option_label)
+                            );
+                        }
+                    }
+                    break;
+            }
+            if ($field_label) {
+                $fields->setField($field_label);
+                // make sure to add after adding the field label otherwise it will be added before the field label
+                if ($description) {
+                    // Add the description as a separate label below the field
+                    $description_label = $fields->label($description, $field_id, ['class' => 'description'], true);
+                    $fields->setField($description_label);
+                }
+            }
+        }
+
+        return $fields;
     }
 }

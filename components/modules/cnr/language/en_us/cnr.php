@@ -513,3 +513,167 @@ $lang['Cnr.domain.CIRAWhoisDisplay.private'] = 'Keep Private';
 $lang['Cnr.domain.CIRALanguage'] = 'Preferred language for communication';
 $lang['Cnr.domain.CIRALanguage.en'] = 'English';
 $lang['Cnr.domain.CIRALanguage.fr'] = 'French';
+
+// #########################################################################
+// #########################################################################
+// # Add translations for CNR registrar module additional domain fields    #
+// #########################################################################
+// #########################################################################
+
+// ----------------------------------------------------------------------
+// ------------------ Common CNR Translations ---------------------------
+// ----------------------------------------------------------------------
+$lang["Cnr.choose"] = "Please Choose";
+$lang["Cnr.optional"] = "(optional)";
+$lang["Cnr.1"] = "Yes";
+$lang["Cnr.0"] = "No";
+$lang["Cnr.consentforpublishing"] = "Registrant, Consent for Publishing";
+
+// NOTE: The following translations are labeled as boilerplate and should
+// be used as a template for other languages. English texts are returned
+// by default from the CNR Backend System. If you want to override these
+// default texts, please consider a language override file in WHMCS using
+// the below translation keys.
+// We added some translations to override the API defaults which sometimes
+// suck.
+//
+// ----------------------------------------------------------------------
+// ------------------ .EU Fields, Boilerplate ---------------------------
+// ----------------------------------------------------------------------
+$lang["Cnr.xeuregistrantlang"] = "Registrant, Language";
+$lang["Cnr.xeuregistrantcitizenship"] = "Registrant, Citizenship";
+$lang["Cnr.xeuregistrantlangdescr"] = "Language to use for communication with the TLD Provider (Default = English)";
+$lang["Cnr.xeuregistrantcitizenshipdescr"] = "";
+
+// ----------------------------------------------------------------------
+// ------------------ .DE Fields, Boilerplate ---------------------------
+// ----------------------------------------------------------------------
+//$lang["Cnr.xdensentry0"] = "";
+$lang["Cnr.xdensentry0descr"] = implode(" ", [
+    "Enables the use of nsentrys instead of nameservers for .de domains;",
+    "NS records allow you to configure subdomains with alternative nameservers.",
+    "<a target=\"_blank\" href=\"https://www.denic.de/en/domains/de-domains/registration/nameserver-and-nsentry-data/\" style=\"text-decoration:underline\">Detailed Read</a>."
+]);
+//$lang["Cnr.xdensentry1"] = "";https://www.denic.de/en/domains/de-domains/registration/nameserver-and-nsentry-data/
+$lang["Cnr.xdensentry1descr"] = "see above";
+//$lang["Cnr.xdensentry2"] = "";
+$lang["Cnr.xdensentry2descr"] = "see above";
+//$lang["Cnr.xdensentry3"] = "";
+$lang["Cnr.xdensentry3descr"] = "see above";
+//$lang["Cnr.xdensentry4"] = "";
+$lang["Cnr.xdensentry4descr"] = "see above";
+//$lang["Cnr.xdegeneralrequest"] = "";
+//$lang["Cnr.xdegeneralrequestdescr"] = "";
+//$lang["Cnr.xdeabusecontact"] = "";
+//$lang["Cnr.xdeabusecontactdescr "] = "";
+
+// ----------------------------------------------------------------------
+// ------------------ .IT Fields, Boilerplate ---------------------------
+// ----------------------------------------------------------------------
+$lang["Cnr.xitconsentforpublishing"] = $lang["Cnr.consentforpublishing"];
+$lang["Cnr.xitconsentforpublishing0"] = $lang["Cnr.0"];
+$lang["Cnr.xitconsentforpublishing1"] = $lang["Cnr.1"];
+$lang["Cnr.xitconsentforpublishingdescr"] = "Allow the publication of contacts personal data. Deny only possible if Entity Type below is 1.";
+$lang["Cnr.xitentitytype"] = "Registrant, Entity Type";
+$lang["Cnr.xitentitytype1"] = "[1] Italian and foreign natural persons";
+$lang["Cnr.xitentitytype2"] = "[2] Companies/one man companies";
+$lang["Cnr.xitentitytype3"] = "[3] Freelance workers/professionals";
+$lang["Cnr.xitentitytype4"] = "[4] non-profit organizations";
+$lang["Cnr.xitentitytype5"] = "[5] public organizations";
+$lang["Cnr.xitentitytype6"] = "[6] other subjects";
+$lang["Cnr.xitentitytype7"] = "[7] foreigners who match 2-6";
+$lang["Cnr.xitentitytypedescr"] = "Entity Type to identify the Registrant Typology.";
+$lang["Cnr.xitpin"] = "Registrant, Tax ID";
+//$lang["Cnr.xitpindescr"] = "";
+$lang["Cnr.xitnationality"] = "Registrant, Nationality";
+$lang["Cnr.xitnationalitydescr"] = "The Nationality of the Registrant specified by 2-char ISO Country Code.";
+//$lang["Cnr.xitsect3liability"] = "";
+$lang["Cnr.xitsect3liabilitydescr"] = "";
+$lang["Cnr.xitsect3liability0"] = $lang["Cnr.0"];
+$lang["Cnr.xitsect3liability1"] = $lang["Cnr.1"];
+//$lang["Cnr.xitsect5personaldataforregistration"] = "";
+$lang["Cnr.xitsect5personaldataforregistrationdescr"] = "";
+$lang["Cnr.xitsect5personaldataforregistration0"] = $lang["Cnr.0"];
+$lang["Cnr.xitsect5personaldataforregistration1"] = $lang["Cnr.1"];
+//$lang["Cnr.xitsect6personaldatafordiffusion"] = "";
+$lang["Cnr.xitsect6personaldatafordiffusiondescr"] = "";
+$lang["Cnr.xitsect6personaldatafordiffusion0"] = $lang["Cnr.0"];
+$lang["Cnr.xitsect6personaldatafordiffusion1"] = $lang["Cnr.1"];
+//$lang["Cnr.xitsect7explicitacceptance"] = "";
+$lang["Cnr.xitsect7explicitacceptancedescr"] = "";
+$lang["Cnr.xitsect7explicitacceptance0"] = $lang["Cnr.0"];
+$lang["Cnr.xitsect7explicitacceptance1"] = $lang["Cnr.1"];
+
+// ----------------------------------------------------------------------
+// ------------------ .FR, .PM, .RE, .TF, .WF, .YT Fields, Boilerplate --
+// ----------------------------------------------------------------------
+// Organizations (Companies, Associations, etc.)
+$lang["Cnr.xfrannounce"] = "Company, Number of Announcement (Journal Officiel)";
+$lang["Cnr.xfrannouncedescr"] = "The number of the announcement (e.g. 5) in the Journal Officiel. Only digits allowed.";
+$lang["Cnr.xfrdatepublicationjo"] = "Company, Date of Publication (Journal Officiel)";
+$lang["Cnr.xfrdatepublicationjodescr"] = implode(" ", [
+    "The date of publication in the official gazette / Journal Officiel.",
+    "Date format YYYY-MM-DD"
+]);
+$lang["Cnr.xfrnumerodepageannouncejo"] = "Company, Page No. of Announcement (Journal Officiel)";
+$lang["Cnr.xfrnumerodepageannouncejodescr"] = "The page number of the announcement in the Journal Officiel.";
+$lang["Cnr.xfrwaldec"] = "Company, Waldec ID";
+$lang["Cnr.xfrwaldecdescr"] = "Indicates the Waldec identifier linked to an association which is sufficient to identify an association if provided. Only digits allowed.";
+$lang["Cnr.xfrdateassociation"] = "Company, Date of Association";
+$lang["Cnr.xfrdateassociationdescr"] = "Shows the date of association. Date Format YYYY-MM-DD.";
+$lang["Cnr.xfrduns"] = "Company, DUNS Number";
+$lang["Cnr.xfrdunsdescr"] = implode(" ", [
+    "The DUNS number is a unique nine-digit identifier for businesses. Short for Data Universal",
+    "Numbering System; refers to a new identifier that can be sent for an Eligibility Verification",
+    "at European level."
+]);
+$lang["Cnr.xfrlocal"] = "Company, Local ID";
+$lang["Cnr.xfrlocaldescr"] = "A local identifier specific to a country of the European Economic Area (e.g. business certificate number).";
+$lang["Cnr.xfrnoprezonecheck0"] = $lang["Cnr.0"];
+$lang["Cnr.xfrnoprezonecheck1"] = $lang["Cnr.1"];
+$lang["Cnr.xfrsirenorsiret"] = "Company, SIREN/SIRET Number";
+$lang["Cnr.xfrsirenorsiretdescr"] = implode(" ", [
+    "For companies with valid SIREN/SIRET number.",
+    "The SIREN code is the unique business identification number in France. It is issued by the",
+    "institut national de la statistique et des études économiques (INSEE) and has 9 digits.",
+    "The first 9 digits are the SIREN number and the following 5 digits are the NIC number",
+    "(Numéro Interne de Classement). The SIRET number is issued once you have registered your",
+    "business with the Chambre de Commerce (RCS) for trade, Chambre de Metiers for crafts and",
+    "manual work or with URSSAF for intellectual services. SIRET numbers are made up of 14",
+    "numbers. The SIRET number provides information about the location of the business in France",
+    "(for established companies). The company name provided in the registrant contact details must",
+    "be exactly the same as shown in the SIREN/SIRET database ( https://www.infogreffe.fr/ )."
+]);
+$lang["Cnr.xfrtrademark"] = "Company, Trademark No.";
+$lang["Cnr.xfrtrademarkdescr"] = "";
+$lang["Cnr.xfrvatid"] = "Company, VAT ID";
+$lang["Cnr.xfrvatiddescr"] = "For companies with valid VATID";
+
+// Individual
+$lang["Cnr.xfrbirthpc"] = "Registrant, ZIP Code (City of Birth)";
+$lang["Cnr.xfrbirthpcdescr"] = implode(" ", [
+    "Only for natural persons born in France, Reunion, Mayotte, Guadeloupe, Martinique, Guyane,",
+    "Polynesie Francaise, Wallis et Futuna or Saint-Pierre-et-Miquelon. Please provide the",
+    "postcode of the place of birth (or at least the department code)"
+]);
+$lang["Cnr.xfrbirthcity"] = "Registrant, City of Birth";
+$lang["Cnr.xfrbirthcitydescr"] = implode(" ", [
+    "Only for natural persons born in France, Reunion, Mayotte, Guadeloupe, Martinique, Guyane,",
+    "Polynesie Francaise, Wallis et Futuna or Saint-Pierre-et-Miquelon. Please provide the Name",
+    "of City."
+]);
+$lang["Cnr.xfrbirthdate"] = "Registrant, Date of Birth";
+$lang["Cnr.xfrbirthdatedescr"] = "The registrant's birthdate in the form YYYY-MM-DD.";
+$lang["Cnr.xfrbirthplace"] = "Registrant, Place of Birth";
+//$lang["Cnr.xfrbirthplacedescr"] = "";
+$lang["Cnr.xfrrestrictpub"] = $lang["Cnr.consentforpublishing"];
+$lang["Cnr.xfrrestrictpub0"] = $lang["Cnr.0"];
+$lang["Cnr.xfrrestrictpub1"] = $lang["Cnr.1"];
+$lang["Cnr.xfrrestrictpubdescr"] = "For Individuals only. Allow the publication of contacts personal data.";
+
+// --- no idea about these fields:
+// $lang["Cnr.xfrnoprezonecheck"] = "";
+// $lang["Cnr.xfrnoprezonecheckdescr"] = "";
+
+
+// ... and so on for other TLDs (Coming soon / on customer demand!)
