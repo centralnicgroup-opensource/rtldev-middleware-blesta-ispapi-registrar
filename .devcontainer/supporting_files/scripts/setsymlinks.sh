@@ -14,3 +14,10 @@ then
     ln -s "/usr/share/rtldev-middleware-blesta/components/modules/cnr" "/var/www/html/blesta/components/modules/cnr"
     chown -h www-data.www-data "/var/www/html/blesta/components/modules/cnr"
 fi
+
+# symlink registrar module @ hexonet
+if [[ -d "/usr/share/rtldev-middleware-blesta" && ! -L "/var/www/html/blesta/components/modules/ispapi" ]]
+then
+   sudo ln -s "/usr/share/rtldev-middleware-blesta/components/modules/ispapi" "/var/www/html/blesta/components/modules/ispapi"
+    sudo chown -h www-data.www-data "/var/www/html/blesta/components/modules/ispapi"
+fi

@@ -399,7 +399,8 @@ class DomainManager extends Base
     public function getAdditionalFields($params)
     {
         $command["COMMAND"] = "QueryCommandSyntax";
-        $command["CLASS"] = $params["tld"];
+        //$command["CLASS"] = $params["tld"];
+        $command["CLASS"] = "de";
         switch ($params["type"]) {
             case "modify":
             case "trade":

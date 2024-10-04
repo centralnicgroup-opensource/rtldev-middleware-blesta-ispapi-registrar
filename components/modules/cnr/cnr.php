@@ -4,7 +4,6 @@ use CNR\MODULE\LIB\AdditionalFields;
 use CNR\MODULE\LIB\Base;
 use CNR\MODULE\LIB\DomainManager;
 use CNR\MODULE\LIB\Helper;
-use CNR\MODULE\LIB\BlestaOverrides;
 
 /**
  * Cnr Module
@@ -21,8 +20,6 @@ class Cnr extends RegistrarModule
      * @var string Default module view path
      */
     private static $defaultModuleView = "components" . DS . "modules" . DS . "cnr" . DS;
-
-    private static $moduleRow;
 
     private $domainManager;
 
@@ -965,27 +962,26 @@ class Cnr extends RegistrarModule
         $fields = new ModuleFields();
 
         $types = [
-            "domain" => Language::_("Cnr.package_fields.type_domain", true),
+            "domain" => Language::_("Ispapi.package_fields.type_domain", true),
         ];
 
         // Set type of package
-        $type = $fields->label(Language::_("Cnr.package_fields.type", true), "cnr_type");
+        $type = $fields->label(Language::_("Ispapi.package_fields.type", true), "ispapi_type");
 
         $type->attach(
             $fields->fieldSelect(
                 "meta[type]",
                 $types,
                 $vars->meta["type"] ?? null,
-                ["id" => "cnr_type"]
+                ["id" => "ispapi_type"]
             )
         );
         $fields->setField($type);
 
         // Set all TLDs
-        $tld_options = $fields->label(Language::_("Cnr.package_fields.tld_options", true));
+        $tld_options = $fields->label(Language::_("Ispapi.package_fields.tld_options", true));
 
         $tlds = $this->getTlds();
-        sort($tlds);
 
         // Set all TLDs Dropdown
         // TODO may improve by setting labels
@@ -1006,12 +1002,12 @@ class Cnr extends RegistrarModule
 
         // Set nameservers
         for ($i = 1; $i <= 5; $i++) {
-            $type = $fields->label(Language::_("Cnr.package_fields.ns" . $i, true), "cnr_ns" . $i);
+            $type = $fields->label(Language::_("Ispapi.package_fields.ns" . $i, true), "ispapi_ns" . $i);
             $type->attach(
                 $fields->fieldText(
                     "meta[ns][]",
                     $vars->meta["ns"][$i - 1] ?? null,
-                    ["id" => "cnr_ns" . $i]
+                    ["id" => "ispapi_ns" . $i]
                 )
             );
             $fields->setField($type);
@@ -1020,18 +1016,18 @@ class Cnr extends RegistrarModule
         $fields->setHtml("
 			<script type=\"text/javascript\">
 				$(document).ready(function() {
-					toggleTldOptions($('#cnr_type').val());
+					toggleTldOptions($('#ispapi_type').val());
 
 					// Re-fetch module options to pull cPanel packages and ACLs
-					$('#cnr_type').change(function() {
+					$('#ispapi_type').change(function() {
 						toggleTldOptions($(this).val());
 					});
 
 					function toggleTldOptions(type) {
 						if (type === 'ssl')
-							$('.cnr_tlds').hide();
+							$('.ispapi_tlds').hide();
 						else
-							$('.cnr_tlds').show();
+							$('.ispapi_tlds').show();
 					}
 				});
 			</script>
@@ -1155,7 +1151,6 @@ class Cnr extends RegistrarModule
         if ($extension_fields) {
             $module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
         }
-
         return (isset($module_fields) ? $module_fields : new ModuleFields());
     }
 
@@ -1177,11 +1172,17 @@ class Cnr extends RegistrarModule
         if ($package->meta->type !== "domain") {
             return new ModuleFields();
         }
-        
+
         Base::setModule($this->getModuleRow($package->module_row));
         Base::moduleInstance($this);
 
         $tld = Helper::getSldTld($vars->domain, true);
+        $extension_fields = [];
+        if ($tld) {
+            $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register"]);
+            $extension_fields = $additionalFields->getConfiguration();
+            Configure::set("Cnr.domain_fields.{$tld}", $extension_fields);
+        }
 
         // Set default name servers
         if (!isset($vars->ns) && isset($package->meta->ns)) {
@@ -1193,12 +1194,6 @@ class Cnr extends RegistrarModule
 
         // Handle transfer request
         if (isset($vars->transfer) || isset($vars->transfer_key)) {
-            $extension_fields = [];
-            if ($tld) {
-                $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register", "moduleRow" => $this->getModuleRow($package->module_row)]);
-                $extension_fields = $additionalFields->getConfiguration();
-                Configure::set("Cnr.domain_fields.{$tld}", $extension_fields);
-            }
             $fields = array_merge(
                 Configure::get("Cnr.transfer_fields"),
                 Configure::get("Cnr.nameserver_fields"),
@@ -1216,30 +1211,22 @@ class Cnr extends RegistrarModule
             return $this->arrayToModuleFields($fields, null, $vars);
         }
 
-        // // Handle domain registration
-        // $fields = array_merge(
-        //     Configure::get("Cnr.nameserver_fields"),
-        //     Configure::get("Cnr.domain_fields"),
-        // );
+        // Handle domain registration
+        $fields = array_merge(
+            Configure::get("Cnr.nameserver_fields"),
+            Configure::get("Cnr.domain_fields"),
+            (array) Configure::get("Cnr.domain_fields.${tld}"),
+        );
 
-        // // TODO: check .ca for whois privacy service
-        // // shouldn't be supported
-        // // $fields["private"]
+        // TODO: check .ca for whois privacy service
+        // shouldn't be supported
+        // $fields["private"]
 
-        // // Already have the domain name don't make editable
-        // $fields["domain"]["type"] = "hidden";
-        // $fields["domain"]["label"] = null;
+        // Already have the domain name don't make editable
+        $fields["domain"]["type"] = "hidden";
+        $fields["domain"]["label"] = null;
 
-        $module_fields = [];//$this->arrayToModuleFields($fields, null, $vars);
-        if (isset($vars->domain)) {
-            $additionalFields = new AdditionalFields(["tld" => $tld, "domain" => $vars->domain, "type" => "register", "moduleRow" => $this->getModuleRow($package->module_row)]);
-            $extension_fields = $additionalFields->getConfiguration();
-
-            if ($extension_fields) {
-                Configure::set("Cnr.domain_fields.{$tld}", $extension_fields);
-                $module_fields = $this->arrayToModuleFields($extension_fields, $module_fields, $vars);
-            }
-        }
+        $module_fields = $this->arrayToModuleFields($fields, null, $vars);
 
         // Determine whether this is an AJAX request
         return (isset($module_fields) ? $module_fields : new ModuleFields());
@@ -3027,93 +3014,93 @@ class Cnr extends RegistrarModule
         }
     }
 
-    protected function arrayToModuleFields($arr, \ModuleFields $fields = null, $vars = null)
-    {
-        if ($fields == null) {
-            $fields = new \ModuleFields();
-        }
+    // protected function arrayToModuleFields($arr, \ModuleFields $fields = null, $vars = null)
+    // {
+    //     if ($fields == null) {
+    //         $fields = new \ModuleFields();
+    //     }
 
-        foreach ($arr as $name => $field) {
-            $label = isset($field['label']) ? $field['label'] : null;
-            $type = isset($field['type']) ? $field['type'] : null;
-            $options = isset($field['options']) ? $field['options'] : null;
-            $attributes = isset($field['attributes']) ? $field['attributes'] : [];
-            $description = isset($field['description']) ? $field['description'] : null;
+    //     foreach ($arr as $name => $field) {
+    //         $label = isset($field['label']) ? $field['label'] : null;
+    //         $type = isset($field['type']) ? $field['type'] : null;
+    //         $options = isset($field['options']) ? $field['options'] : null;
+    //         $attributes = isset($field['attributes']) ? $field['attributes'] : [];
+    //         $description = isset($field['description']) ? $field['description'] : null;
 
-            $field_id = isset($attributes['id']) ? $attributes['id'] : $name . '_id';
+    //         $field_id = isset($attributes['id']) ? $attributes['id'] : $name . '_id';
 
-            $field_label = null;
-            if ($type !== 'hidden') {
-                $field_label = $fields->label($label, $field_id, [], true);
-            }
+    //         $field_label = null;
+    //         if ($type !== 'hidden') {
+    //             $field_label = $fields->label($label, $field_id, [], true);
+    //         }
 
-            $attributes['id'] = $field_id;
+    //         $attributes['id'] = $field_id;
 
-            switch ($type) {
-                default:
-                    $value = $options;
-                    $type = 'field' . ucfirst($type);
-                    $field_label->attach(
-                        $fields->{$type}($name, isset($vars->{$name}) ? $vars->{$name} : $value, $attributes),
-                    );
-                    break;
-                case 'hidden':
-                    $value = $options;
-                    $fields->setField(
-                        $fields->fieldHidden($name, isset($vars->{$name}) ? $vars->{$name} : $value, $attributes)
-                    );
-                    break;
-                case 'select':
+    //         switch ($type) {
+    //             default:
+    //                 $value = $options;
+    //                 $type = 'field' . ucfirst($type);
+    //                 $field_label->attach(
+    //                     $fields->{$type}($name, isset($vars->{$name}) ? $vars->{$name} : $value, $attributes),
+    //                 );
+    //                 break;
+    //             case 'hidden':
+    //                 $value = $options;
+    //                 $fields->setField(
+    //                     $fields->fieldHidden($name, isset($vars->{$name}) ? $vars->{$name} : $value, $attributes)
+    //                 );
+    //                 break;
+    //             case 'select':
 
-                    $field_label->attach(
-                        $fields->fieldSelect(
-                            $name,
-                            $options,
-                            isset($vars->{$name}) ? $vars->{$name} : null,
-                            $attributes
-                        )
-                    );
-                    break;
-                case 'checkbox':
-                    // No break
-                case 'radio':
-                    $i = 0;
-                    foreach ($options as $key => $value) {
-                        $option_id = $field_id . '_' . $i++;
-                        $option_label = $fields->label($value, $option_id);
+    //                 $field_label->attach(
+    //                     $fields->fieldSelect(
+    //                         $name,
+    //                         $options,
+    //                         isset($vars->{$name}) ? $vars->{$name} : null,
+    //                         $attributes
+    //                     )
+    //                 );
+    //                 break;
+    //             case 'checkbox':
+    //                 // No break
+    //             case 'radio':
+    //                 $i = 0;
+    //                 foreach ($options as $key => $value) {
+    //                     $option_id = $field_id . '_' . $i++;
+    //                     $option_label = $fields->label($value, $option_id);
 
-                        $checked = false;
-                        if (isset($vars->{$name})) {
-                            if (is_array($vars->{$name})) {
-                                $checked = in_array($key, $vars->{$name});
-                            } else {
-                                $checked = $key == $vars->{$name};
-                            }
-                        }
+    //                     $checked = false;
+    //                     if (isset($vars->{$name})) {
+    //                         if (is_array($vars->{$name})) {
+    //                             $checked = in_array($key, $vars->{$name});
+    //                         } else {
+    //                             $checked = $key == $vars->{$name};
+    //                         }
+    //                     }
 
-                        if ($type == 'checkbox') {
-                            $field_label->attach(
-                                $fields->fieldCheckbox($name, $key, $checked, ['id' => $option_id], $option_label)
-                            );
-                        } else {
-                            $field_label->attach(
-                                $fields->fieldRadio($name, $key, $checked, ['id' => $option_id], $option_label)
-                            );
-                        }
-                    }
-                    break;
-            }
-            if ($field_label) {
-                $fields->setField($field_label);
-                // make sure to add after adding the field label otherwise it will be added before the field label
-                if ($description) {
-                    // Add the description as a separate label below the field
-                    $description_label = $fields->label($description, $field_id, ['class' => 'description'], true);
-                    $fields->setField($description_label);
-                }
-            }
-        }
+    //                     if ($type == 'checkbox') {
+    //                         $field_label->attach(
+    //                             $fields->fieldCheckbox($name, $key, $checked, ['id' => $option_id], $option_label)
+    //                         );
+    //                     } else {
+    //                         $field_label->attach(
+    //                             $fields->fieldRadio($name, $key, $checked, ['id' => $option_id], $option_label)
+    //                         );
+    //                     }
+    //                 }
+    //                 break;
+    //         }
+    //         if ($field_label) {
+    //             $fields->setField($field_label);
+    //             // make sure to add after adding the field label otherwise it will be added before the field label
+    //             if ($description) {
+    //                 // Add the description as a separate label below the field
+    //                 $description_label = $fields->label($description, $field_id, ['class' => 'description'], true);
+    //                 $fields->setField($description_label);
+    //             }
+    //         }
+    //     }
 
-        return $fields;
-    }
+    //     return $fields;
+    // }
 }

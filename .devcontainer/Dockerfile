@@ -33,41 +33,74 @@ ENV ARCHIVES_DIR_PATH supporting_files/archives
 ENV SCRIPTS_DIR_PATH supporting_files/scripts
 ENV MYSQL_DUMP_DIR_PATH supporting_files/mysql-dump
 
+
 ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
 ENV DEBIAN_FRONTEND noninteractive
+# Set a default value for ZSH_CUSTOM if it's not already set
+ENV ZSH_CUSTOM=/home/vscode/.oh-my-zsh/custom
 
 # Tweaks to give Apache/PHP write permissions to the app
-RUN usermod -u ${BOOT2DOCKER_ID} www-data && \
-    usermod -G staff www-data && \
+# Step 1: Update the UID of the "www-data" user to the value of $BOOT2DOCKER_ID
+# This ensures consistency of the user's ID across different systems
+# The "-eux" flags enable strict error checking and debugging during script execution
+# The "-e" option causes the script to exit immediately if any command fails (returns non-zero exit status)
+# The "-u" option stands for "errexit"
+# The "-u" option treats unset variables as errors and causes the script to exit
+# The "-x" option stands for "xtrace" or "debug mode" and prints each command before execution
+# This helps with debugging and tracing the flow of the script
+RUN set -eux; \
+    usermod -u ${BOOT2DOCKER_ID} www-data && \
+# Step 2: Add a new system user "mysql" with a default (system) shell
     useradd -r mysql && \
-    usermod -G staff mysql && \
-    groupmod -g $(($BOOT2DOCKER_GID + 10000)) $(getent group $BOOT2DOCKER_GID | cut -d: -f1) && \
-    groupmod -g ${BOOT2DOCKER_GID} staff
+# Step 3: Add the "www-data" user to the supplementary group "www-data"
+# This allows the "www-data" user to belong to multiple groups
+    usermod -G www-data,www-data mysql && \
+# Step 4: Calculate the new GID by adding 10000 to $BOOT2DOCKER_GID
+    new_gid=$((${BOOT2DOCKER_GID} + 10000)) && \
+# Step 5: Get the group name associated with $BOOT2DOCKER_GID
+# The command substitution $(...) retrieves the group name by looking up the GID in the group database
+# The "cut" command extracts the first field (group name) from the output
+    group_name=$(getent group ${BOOT2DOCKER_GID} | cut -d: -f1) && \
+# Step 6: Modify the group with the new GID and its existing name
+    groupmod -g ${new_gid} ${group_name} && \
+# Step 7: Change the GID of the "www-data" group to the value of $BOOT2DOCKER_GID
+    groupmod -g ${BOOT2DOCKER_GID} www-data
 
-# Install packages
-# Suppress an apt-key warning about standard out not being a terminal. Use in this script is safe.
-RUN apt-get update \
-    && apt-get -y upgrade \
-    && apt-get -y install software-properties-common cron
-RUN LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php && \
-    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 4F4EA0AAE5267A6C
-RUN apt-get -y install supervisor postfix python3-setuptools wget jq sudo git apache2 php${PHP_VERSION}-xdebug libapache2-mod-php${PHP_VERSION} mysql-server php${PHP_VERSION}-mysql pwgen php${PHP_VERSION}-apcu php${PHP_VERSION}-gd php${PHP_VERSION}-xml php${PHP_VERSION}-mbstring zip unzip php${PHP_VERSION}-zip curl php${PHP_VERSION}-curl && \
-    echo "ServerName localhost" >> /etc/apache2/apache2.conf
-# echo "port = 3360" >> /etc/mysql/my.cnf
+# ------ APT PKG MANAGER --------------------------------------------
+# update installed apt packages
+RUN apt update
+RUN apt upgrade -y
 
-# Cleanup
-RUN apt-get -y autoremove && \
-    apt-get -y clean
+# make add-apt-repository command available
+RUN apt install --no-install-recommends -y software-properties-common
 
-# Add MySQL utils
-COPY ${SCRIPTS_DIR_PATH}/create_mysql_users.sh /create_mysql_users.sh
+# add git repository for latest git
+RUN add-apt-repository ppa:git-core/ppa && apt install --no-install-recommends -y git
 
-# Add image configuration and scripts
-COPY ${SCRIPTS_DIR_PATH}/start-apache2.sh /start-apache2.sh
-COPY ${SCRIPTS_DIR_PATH}/start-mysqld.sh /start-mysqld.sh
-COPY ${SCRIPTS_DIR_PATH}/run.sh /run.sh
-COPY ${SCRIPTS_DIR_PATH}/post-create.sh /post-create.sh
+# install further apt packages
+RUN apt update && apt install --no-install-recommends -y make cron supervisor postfix python3-setuptools wget jq sudo apache2 pwgen mysql-server zip unzip tar curl 
+
+# install php apt packages
+RUN apt install --no-install-recommends -y php-pear php${PHP_VERSION}-dev php${PHP_VERSION}-xdebug libapache2-mod-php${PHP_VERSION} php${PHP_VERSION}-mysql php${PHP_VERSION}-apcu php${PHP_VERSION}-gd php${PHP_VERSION}-xml php${PHP_VERSION}-mbstring php${PHP_VERSION}-zip php${PHP_VERSION}-curl
+
+## INSTALL XDEBUG STABLE VERSION
+RUN pecl install xdebug-3.2.2
+# -------------------------------------------------------------------
+
+    # Cleanup
+RUN apt autoremove -y \
+&& apt clean -y \
+&& rm -rf /var/lib/apt/lists/* \
+&& update-locale
+
+# copy MySQL & apache utils and other shell scripts
+COPY ${SCRIPTS_DIR_PATH}/ /
+
+# Remove pre-installed database
+RUN rm -rf /var/lib/mysql
+
 RUN chmod 755 /*.sh
+
 COPY ${CONFIGURATION_DIR_PATH}/supervisord-apache2.conf /etc/supervisor/conf.d/supervisord-apache2.conf
 COPY ${CONFIGURATION_DIR_PATH}/supervisord-mysqld.conf /etc/supervisor/conf.d/supervisord-mysqld.conf
 COPY ${CONFIGURATION_DIR_PATH}/supervisord.conf /etc/supervisor/supervisord.conf
