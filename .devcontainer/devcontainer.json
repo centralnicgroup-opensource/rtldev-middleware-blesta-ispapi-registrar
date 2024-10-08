@@ -8,29 +8,34 @@
   "service": "blesta",
   "workspaceFolder": "/usr/share/rtldev-middleware-blesta",
   "shutdownAction": "stopCompose",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "GitHub.vscode-pull-request-github",
-        "ms-vscode-remote.remote-containers",
-        "felixfbecker.php-debug",
-        "bmewburn.vscode-intelephense-client",
-        "mrmlnc.vscode-apache",
-        "xdebug.php-debug",
-        "neilbrayfield.php-docblocker",
-        "GitHub.copilot"
-      ],
-      "settings": {
-        "terminal.integrated.defaultProfile.linux": "zsh",
-        "php.validate.executablePath": "/usr/bin/php",
-        "terminal.integrated.profiles.linux": {
-          "zsh": {
-            "path": "/bin/zsh"
-          }
-        }
-      }
-    }
-  },
+	"customizations": {
+	  "vscode": {
+		"extensions": [
+      "github.vscode-github-actions",
+      "GitHub.vscode-pull-request-github",
+      "ms-vscode-remote.remote-containers",
+      "mrmlnc.vscode-apache",
+      "ms-azuretools.vscode-docker",
+      "bmewburn.vscode-intelephense-client",
+      "xdebug.php-debug",
+      "GitHub.copilot"
+    ],
+		"settings": {
+		  "terminal.integrated.defaultProfile.linux": "zsh",
+		  "terminal.integrated.profiles.linux": {
+			"zsh": {
+			  "path": "/bin/zsh"
+			}
+		  },
+		  "php.validate.executablePath": "/usr/bin/php",
+		  "php.executablePath": "/usr/bin/php",
+		  "php.suggest.basic": false,
+		  "files.associations": {
+			"*.module": "php"
+		  }
+		}
+	  }
+	},
   "remoteUser": "vscode",
-  "postCreateCommand": "zsh /post-create.sh"
+	"postCreateCommand": "zsh /post-create.sh"
 }
