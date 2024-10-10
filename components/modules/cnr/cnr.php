@@ -118,10 +118,19 @@ class Cnr extends RegistrarModule
         if (isset($vars["domain"])) {
             $tld = Helper::getSldTld($vars["domain"], true);
         }
+        $row = $this->getModuleRow($package->module_row);
+        Base::setModule($row);
+        Base::moduleInstance($this);
+
+        foreach ($vars as $key => $value) {
+            if (preg_match("/^X-(.*)/", $key)) {
+                $extension_fields[$key] = $value;
+            }
+        }
 
         $input_fields = array_merge(
             Configure::get("Cnr.domain_fields"),
-            (array) Configure::get("Cnr.domain_fields." . $tld),
+            $extension_fields ?? [],
             (array) Configure::get("Cnr.nameserver_fields"),
             (array) Configure::get("Cnr.transfer_fields"),
             [
@@ -130,9 +139,6 @@ class Cnr extends RegistrarModule
             ]
         );
 
-        $row = $this->getModuleRow($package->module_row);
-        Base::setModule($row);
-        Base::moduleInstance($this);
 
         if (isset($vars["use_module"]) && $vars["use_module"] == "true") {
             if ($package->meta->type === "domain") {
